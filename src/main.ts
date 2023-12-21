@@ -1,5 +1,8 @@
-import { defaultConfig } from "../config.js";
+import { Config } from './config';
 import { crawl, write } from "./core.js";
 
-await crawl(defaultConfig);
-await write(defaultConfig);
+export async function startCrawling(config: Config) {
+    await crawl(config);
+    await write(config);
+}
+

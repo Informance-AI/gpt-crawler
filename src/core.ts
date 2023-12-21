@@ -160,7 +160,7 @@ export async function write(config: Config) {
     Buffer.byteLength(str, "utf-8");
 
   const nextFileName = (): string =>
-    `${config.outputFileName.replace(/\.json$/, "")}-${fileCounter}.json`;
+    `${config.outputFileName.replace(/\.json$/, "")}.json`;
 
   const writeBatchToFile = async (): Promise<void> => {
     await writeFile(nextFileName(), JSON.stringify(currentResults, null, 2));
