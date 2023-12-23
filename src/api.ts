@@ -3,7 +3,7 @@ import cors from 'cors';
 import fileUpload from 'express-fileupload';
 import { PlaywrightCrawler } from 'crawlee';
 import { Page } from 'playwright';
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, writeFile, unlink } from 'fs/promises';
 import { startCrawling } from "./main.js";
 
 const app = express();
@@ -28,11 +28,14 @@ app.post('/crawl', async (req, res) => {
 
     const config = JSON.parse(configContent);
 
+    console.log('Crawling with configuration:', config);
+
     try {
         await startCrawling(config);
         const outputFileContent = await readFile("/Users/chuci/Documents/GitKraken/gpt-crawler/output-1.json", 'utf-8');
         res.contentType('application/json');
         res.send(outputFileContent); // Removed return here
+        await unlink("/Users/chuci/Documents/GitKraken/gpt-crawler/output-1.json");
     } catch (error) {
         res.status(500).json({ message: 'Error occurred during crawling', error });
     }
