@@ -27,9 +27,10 @@ with open('config.json', 'rb') as config_file:
 
 # Check if the request was successful
 if response.status_code == 200:
-    # Save the response content as output-1.json
-    with open('/Users/chuci/Documents/GitKraken/gpt-crawler/demo/output.json', 'w') as output_file:
-        output_file.write(response.text)
-    print("Output saved as output-1.json")
+    # # Save the response content as output-1.json
+    # with open('/Users/chuci/Documents/GitKraken/gpt-crawler/demo/output.json', 'w') as output_file:
+    #     output_file.write(response.text)
+    # print("Output saved as output-1.json")
+    print(response.text)
 else:
     print(f"Error: {response.status_code} - {response.text}")
