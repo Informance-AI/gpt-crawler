@@ -5,6 +5,8 @@ import cors from 'cors';
 import fileUpload from 'express-fileupload';
 import { readFile, unlink } from 'fs/promises';
 import { startCrawling } from "./main.js";
+import { constants } from 'fs';
+import { readdir } from 'fs/promises';
 
 const app = express();
 const port = 3001;
@@ -45,7 +47,36 @@ app.post('/crawl', async (req, res) => {
 
                 // After crawling is done, read the output file (if needed) and delete it
                 // const outputFileContent = await readFile("/path/to/output.json", 'utf-8');
-                await unlink("/Users/chuci/Documents/GitKraken/gpt-crawler/output-1.json");
+                // Inside your try block where you want to unlink the file
+                const outputPath = "/Users/chuci/Documents/GitKraken/gpt-crawler/output-1.json";
+                const storagePath = "/Users/chuci/Documents/GitKraken/gpt-crawler/storage/datasets/default/";
+                
+                try {
+                    await unlink(outputPath);
+                    console.log('Output file deleted successfully');
+                } catch (error: any) {
+                    if (error.code === 'ENOENT') {
+                        console.log('Output file does not exist, no need to delete');
+                    } else {
+                        throw error; // Re-throw the error if it is not related to file existence
+                    }
+                }
+
+                try {
+                    const files = await readdir(storagePath);
+                    for (const file of files) {
+                        try {
+                            await unlink(`${storagePath}${file}`);
+                            console.log(`Deleted file: ${file}`);
+                        } catch (error: any) {
+                            if (error.code !== 'ENOENT') {
+                                throw error; // Only re-throw if the error is not because the file doesn't exist
+                            }
+                        }
+                    }
+                } catch (error: any) {
+                    console.error('Error reading the storage directory', error);
+                }
 
                 // Update the process status in the mock database
                 processStatus.set(processId, 'done');

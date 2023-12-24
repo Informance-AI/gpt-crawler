@@ -1,12 +1,12 @@
 // For more information, see https://crawlee.dev/
-import { PlaywrightCrawler, downloadListOfUrls } from "crawlee";
+import { PlaywrightCrawler, downloadListOfUrls, Configuration} from "crawlee";
 import { readFile, writeFile } from "fs/promises";
 import { glob } from "glob";
 import { Config, configSchema } from "./config.js";
 import { Page } from "playwright";
 import { isWithinTokenLimit } from "gpt-tokenizer";
 
-let pageCounter = 0;
+// let pageCounter = 0;
 
 export function getPageHtml(page: Page, selector = "body") {
   return page.evaluate((selector) => {
@@ -48,6 +48,10 @@ export async function waitForXPath(page: Page, xpath: string, timeout: number) {
 
 export async function crawl(config: Config) {
   configSchema.parse(config);
+
+  let pageCounter = 0
+
+  const clawlee_config = new Configuration({'persistStorage': true, 'purgeOnStart':false})
 
   if (process.env.NO_CRAWL !== "true") {
     // PlaywrightCrawler crawls the web using a headless
@@ -122,10 +126,12 @@ export async function crawl(config: Config) {
           );
         },
       ],
-    });
+    }, clawlee_config);
 
     const SITEMAP_SUFFIX = "sitemap.xml";
     const isUrlASitemap = config.url.endsWith(SITEMAP_SUFFIX);
+
+    
 
     if (isUrlASitemap) {
       const listOfUrls = await downloadListOfUrls({ url: config.url });
