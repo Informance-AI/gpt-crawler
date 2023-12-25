@@ -19,9 +19,32 @@ app.use(express.json());
 app.use(fileUpload());
 
 app.post('/crawl', async (req, res) => {
-    if (!req.files || !req.files.config) {
-        return res.status(400).json({ message: 'Config file is required.' });
+    const { url } = req.body;
+
+    if (!url) {
+        return res.status(400).json({ message: 'URL is required.' });
     }
+
+    // Generate the match pattern by removing the last segment of the URL
+    let matchPattern;
+    // Check if the URL ends with a slash or has a trailing segment
+    if (url.endsWith('/')) {
+        // If the URL ends with a slash, remove the last two segments
+        matchPattern = url.split('/').slice(0, -2).join('/') + '/**';
+    } else {
+        // If the URL has a trailing segment, remove the last segment
+        matchPattern = url.split('/').slice(0, -1).join('/') + '/**';
+    }
+
+    // Define the rest of the config on the server side
+    const config_data = {
+        url,
+        match: matchPattern,
+        maxPagesToCrawl: 1000,
+        outputFileName: "/home/ubuntu/gpt-crawler/output-1.json",
+    };
+    
+    const config_json = JSON.stringify(config_data);
 
     // Generate a unique process ID and send it back immediately
     const processId = Math.random().toString(36).substr(2, 9);
@@ -32,51 +55,48 @@ app.post('/crawl', async (req, res) => {
     // Process the crawling in the background
     (async () => {
         try {
-            if (req.files && req.files.config) {
-                let configContent;
-                if (Array.isArray(req.files.config)) {
-                    configContent = req.files.config[0].data.toString('utf-8');
-                } else {
-                    configContent = req.files.config.data.toString('utf-8');
-                }
-                const config = JSON.parse(configContent);
-                console.log('Crawling with configuration:', config);
+            if (req.body) {
 
+                console.log('Crawling with configuration:', config_json);
+                
                 // Start crawling
-                await startCrawling(config);
+                await startCrawling(JSON.parse(config_json));
+
+
+                // ** data update **
 
                 // After crawling is done, read the output file (if needed) and delete it
                 // const outputFileContent = await readFile("/path/to/output.json", 'utf-8');
                 // Inside your try block where you want to unlink the file
-                const outputPath = "/Users/chuci/Documents/GitKraken/gpt-crawler/output-1.json";
-                const storagePath = "/Users/chuci/Documents/GitKraken/gpt-crawler/storage/datasets/default/";
+                const outputPath = "/home/ubuntu/gpt-crawler/output-1.json";
+                const storagePath = "/home/ubuntu/gpt-crawler/storage/datasets/default/";
                 
-                try {
-                    await unlink(outputPath);
-                    console.log('Output file deleted successfully');
-                } catch (error: any) {
-                    if (error.code === 'ENOENT') {
-                        console.log('Output file does not exist, no need to delete');
-                    } else {
-                        throw error; // Re-throw the error if it is not related to file existence
-                    }
-                }
+                // try {
+                //     await unlink(outputPath);
+                //     console.log('Output file deleted successfully');
+                // } catch (error: any) {
+                //     if (error.code === 'ENOENT') {
+                //         console.log('Output file does not exist, no need to delete');
+                //     } else {
+                //         throw error; // Re-throw the error if it is not related to file existence
+                //     }
+                // }
 
-                try {
-                    const files = await readdir(storagePath);
-                    for (const file of files) {
-                        try {
-                            await unlink(`${storagePath}${file}`);
-                            console.log(`Deleted file: ${file}`);
-                        } catch (error: any) {
-                            if (error.code !== 'ENOENT') {
-                                throw error; // Only re-throw if the error is not because the file doesn't exist
-                            }
-                        }
-                    }
-                } catch (error: any) {
-                    console.error('Error reading the storage directory', error);
-                }
+                // try {
+                //     const files = await readdir(storagePath);
+                //     for (const file of files) {
+                //         try {
+                //             await unlink(`${storagePath}${file}`);
+                //             console.log(`Deleted file: ${file}`);
+                //         } catch (error: any) {
+                //             if (error.code !== 'ENOENT') {
+                //                 throw error; // Only re-throw if the error is not because the file doesn't exist
+                //             }
+                //         }
+                //     }
+                // } catch (error: any) {
+                //     console.error('Error reading the storage directory', error);
+                // }
 
                 // Update the process status in the mock database
                 processStatus.set(processId, 'done');
